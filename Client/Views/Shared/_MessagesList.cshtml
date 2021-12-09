@@ -1,0 +1,38 @@
+﻿@model IEnumerable<SignalRDbUpdates.Models.AspNetUsersNot>
+
+@*<p>
+    @Html.ActionLink("Create New", "Create")
+</p>*@
+<table class="table">
+    <tr>
+        <th>@Html.DisplayNameFor(model => model.UserID)</th>
+        <th>
+            @Html.DisplayNameFor(model => model.LeadPlanActivityID)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.NotificationDateTimeUtc)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.StatusID)
+        </th>
+    </tr>
+
+@foreach (var item in Model) {
+<tr>
+    <td>
+        @Html.DisplayFor(modelItem => item.UserID)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.LeadPlanActivityID)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.NotificationDateTimeUtc)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.StatusID)
+    </td>
+
+</tr>
+}
+
+</table>
