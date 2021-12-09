@@ -8,9 +8,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="ActionTablesData\**" />
 	  <Compile Remove="Data\**" />
+	  <Content Remove="ActionTablesData\**" />
 	  <Content Remove="Data\**" />
+	  <EmbeddedResource Remove="ActionTablesData\**" />
 	  <EmbeddedResource Remove="Data\**" />
+	  <None Remove="ActionTablesData\**" />
 	  <None Remove="Data\**" />
 	</ItemGroup>
 
@@ -36,10 +40,6 @@
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
 		<PackageReference Include="RestSharp" Version="106.13.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="ActionTablesData\" />
 	</ItemGroup>
 
 </Project>
