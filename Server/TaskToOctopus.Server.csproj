@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<UserSecretsId>dotnet-BackgroundTasksToOctopusServer-E6370564-EEA4-467C-AC17-5BDD716D3C4B</UserSecretsId>
+		<RootNamespace>TaskToOctopus.Server</RootNamespace>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Data\**" />
+	  <Content Remove="Data\**" />
+	  <EmbeddedResource Remove="Data\**" />
+	  <None Remove="Data\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Models\AspNetUsersNot.cs" />
+	  <Compile Remove="Models\MainMessageNotification.cs" />
+	  <Compile Remove="Models\Notification.cs" />
+	  <Compile Remove="Models\StatusDefModel.cs" />
+	  <Compile Remove="Models\UserWhoNotification.cs" />
+	  <Compile Remove="Models\V_MessagesNotification.cs" />
+	  <Compile Remove="Services\ConsumeScopedServiceHostedService.cs" />
+	  <Compile Remove="Services\ScopedProcessingService.cs" />
+	  <Compile Remove="Services\TimedHostedService.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.12">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
+		<PackageReference Include="RestSharp" Version="106.13.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="ActionTablesData\" />
+	</ItemGroup>
+
+</Project>
