@@ -13,7 +13,35 @@ namespace SignalRDbUpdates.Repositories
         public UnitOfWork()
         {
         }
-        public IEnumerable<AspNetUsersNot> GetAllMessages(string userid)
+        public int SetMessageReceived(string userid)
+        {
+            var messages = new List<AspNetUsersNot>();
+            using (var connection = new SqlConnection(_connString))
+            {
+                string sql = "UPDATE dbo.AspNetUsersNot SET" +
+                             "[StatusID] = 2005 " +
+                             "[NotifiedDateTimeUtc] = GETUTCDATE() " +
+                            "WHERE StatusID = 2000 " +
+                            "AND NotificationDateTimeUtc BETWEEN DATEADD(minute, -111112, GETUTCDATE()) " +
+                            "AND dateadd(minute, 111113, GETUTCDATE()) " +
+                            "AND UserID in(select id from CRMSSO.dbo.AspNetUsers where StatusID = 31) " +
+                            $"AND UserID = CASE WHEN UserID = '{userid}' THEN UserID ELSE '{userid}' END";
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    command.Notification = null;
+
+                    if (connection.State == ConnectionState.Closed)
+                        connection.Open();
+
+                    command.CommandText = sql;
+                    command.CommandType = CommandType.Text;
+
+                    return command.ExecuteNonQuery();
+                }
+            }
+        }
+        public IEnumerable<AspNetUsersNot> GetMessagesToNotify(string userid)
         {
             var messages = new List<AspNetUsersNot>();
             using (var connection = new SqlConnection(_connString))

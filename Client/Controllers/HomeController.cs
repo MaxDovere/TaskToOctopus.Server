@@ -61,8 +61,16 @@ namespace SignalRDbUpdates.Controllers
             // se esiste la connectioId ricerca la userid e se esiste
             // spinge i messaggi trovati verso questo utente o a tutti
             // per visualizzarli.
-            var messages = _uow.GetAllMessages(userid);
-            return PartialView("_MessagesList", messages);
+            var messages = _uow.GetMessagesToNotify(userid);
+            /*
+             * ora può aggiornare i messaggi catturati e mettere lo statusID maggiore di 2000 
+            */
+            var rows = _uow.SetMessageReceived(userid);
+            if(rows > 0) 
+                return PartialView("_MessagesList", messages);
+            
+            return PartialView("_MessagesList", new List<AspNetUsersNot>());
+
         }
     }
 }

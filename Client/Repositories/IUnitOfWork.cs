@@ -5,7 +5,8 @@ namespace SignalRDbUpdates.Repositories
 {
     public interface IUnitOfWork
     {
-        IEnumerable<AspNetUsersNot> GetAllMessages(string userid);
+        IEnumerable<AspNetUsersNot> GetMessagesToNotify(string userid);
+        int SetMessageReceived(string userid);
         bool SubscribeUserHubConnectionId(string userid, string connectionid);
         bool UnSubscribeUserHubConnectionId(string userid, string connectionid);
         IEnumerable<AspUsersHubConnection> GetUserHubConnections(string userid);
