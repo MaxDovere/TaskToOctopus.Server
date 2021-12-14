@@ -166,17 +166,19 @@ namespace TaskToOctopus.Infrastructure.Repositories
             {
                 var connections = GetUserHubConnections(userid)?
                         .Where(x => x.ConnectionID == connectionid)
-                        .FirstOrDefault();
+                        .FirstOrDefault(); /// prendo la prima
 
                 if (connections != null)
                 {
                     try
                     {
-                        _context.AspUsersHubConnections.Remove(new AspUsersHubConnection()
-                        {
-                            UserID = userid,
-                            ConnectionID = connectionid
-                        });
+                        _context.AspUsersHubConnections.Remove(connections);
+
+                        //_context.AspUsersHubConnections.Remove(new AspUsersHubConnection()
+                        //{
+                        //    UserID = userid,
+                        //    ConnectionID = connectionid
+                        //});
                         _context.SaveChanges();
                         return true;
                     }
