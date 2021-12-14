@@ -1,69 +1,25 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.EventLog;
-using System.Threading.Tasks;
-using TaskToOctopus.Server.ActionData;
-using TaskToOctopus.Server.Repositories;
+using Serilog;
+using TaskToOctopus.Domain.Services;
+using TaskToOctopus.Infrastructure;
+using TaskToOctopus.Infrastructure.Extensions;
+using TaskToOctopus.Persistence;
+using TaskToOctopus.Persistence.Context;
+using TaskToOctopus.Server;
 using TaskToOctopus.Server.Services;
 
-//using var host = Host.CreateDefaultBuilder(args)
-//    .ConfigureServices((hostContext, services) =>
-//    {
-
-//        var configBuilder = new ConfigurationBuilder()
-//                                .AddJsonFile("appsettings.json", optional: true);
-
-//        var config = configBuilder.Build();
-
-//        var sp = new ServiceCollection()
-//            .AddLogging(b => b.AddConsole())
-//            .AddSingleton<IConfiguration>(config)
-//            .BuildServiceProvider();
-
-//        var logger = sp.GetService<ILoggerFactory>().CreateLogger<OctopusNotificationsDbContext>();
-
-//        logger.LogDebug("Starting");
-
-//        services.AddDbContext<OctopusNotificationsDbContext>(options =>
-//            options.UseSqlServer(config.GetConnectionString("OctopusNotifications")));
-
-//        services.AddSingleton<MonitorLoop>();
-//        services.AddHostedService<QueuedHostedService>();
-//        services.AddSingleton<IBackgroundTaskQueue>(ctx =>
-//            {
-//                if (!int.TryParse(hostContext.Configuration["QueueCapacity"], out var queueCapacity))
-//                    queueCapacity = 100;
-//                return new BackgroundTaskQueue(queueCapacity);
-//            });
-//        services.AddTransient<IUnitOfWork, UnitOfWork>();
-//        services.AddSingleton<IConsumeToNotifications, ConsumeToNotifications>();
-
-//    })
-//    .Build();
-
-//await host.StartAsync();
-
-//var monitorLoop = host.Services.GetRequiredService<MonitorLoop>();
-//monitorLoop.StartMonitorLoop();
-
-//await host.WaitForShutdownAsync();
 public class Program
 {
+    public static IConfiguration Configuration { get; set; }
+    public static AppSettings AppSettings { get; set; }
+
     public static void Main(string[] args)
     {
         CreateHostBuilder(args).Build().Run();
-
-        //using var host = CreateHostBuilder(args).Build();
-
-        //await host.StartAsync();
-
-        //var monitorLoop = host.Services.GetRequiredService<MonitorService>();
-        //monitorLoop.StartMonitorLoop();
-
-        //await host.WaitForShutdownAsync();
     }
     public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
@@ -73,34 +29,40 @@ public class Program
 
                 var config = configBuilder.Build();
 
-                var sp = new ServiceCollection()
-                    .AddLogging(b => b.AddConsole())
-                    .AddSingleton<IConfiguration>(config)
+                Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(config).CreateLogger();
+
+                AppSettings = new AppSettings();
+                config.Bind(AppSettings);
+                //AppSettings.ConnectionString = config.GetConnectionString("Coo");
+                Configuration = config;
+
+                //var sp = new ServiceCollection()
+                var sp = services.AddLogging(b => b.AddConsole())
+                    .AddSingleton<IConfiguration>(Configuration)
                     .BuildServiceProvider();
+                
+                services.AddPersistence(AppSettings);
+                
+                services.AddDomain(AppSettings);
+
+                services.AddRepositories(AppSettings);
+                
+                services.AddInfrastructure(AppSettings);
+                
+                services.AddServices(AppSettings);
 
                 var logger = sp.GetService<ILoggerFactory>().CreateLogger<CRMSSODbContext>();
+                
+                Log.Logger.Debug("Starting Appplication TaskToOctopus.Server");
 
-                logger.LogDebug("Starting");
-
-                services.AddDbContext<CRMSSODbContext>(options =>
-                    options.UseSqlServer(config.GetConnectionString("CRMSSOEntities")));
-
-                services.AddSingleton<IMonitorService,MonitorService>();
-                services.AddHostedService<QueuedHostedService>();
-                services.AddSingleton<IBackgroundTaskQueue>(ctx =>
-                {
-                    if (!int.TryParse(hostContext.Configuration["QueueCapacity"], out var queueCapacity))
-                        queueCapacity = 100;
-                    return new BackgroundTaskQueue(queueCapacity);
-                });
-                services.AddTransient<IUnitOfWork, UnitOfWork>();
-                services.AddSingleton<IConsumeToNotifications, ConsumeToNotifications>();
+                logger.LogDebug("Starting Logger Context DB");
+                
                 /*
                  * istanzio l'oggetto che sarà il monitor degli altri oggetti per le parti in background
                  * e lo attivo come servizio windows. Andrà installato nel Server Control della macchina e 
                  * attivato con l'avvio e lo stop manuale.
                  */
-                services.AddHostedService<StartWorker>()
+                services.AddHostedService<Startup>()
                     .Configure<EventLogSettings>(config =>
                     {
                         config.LogName = "Task Octopus Notification Service";

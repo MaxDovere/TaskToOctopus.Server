@@ -1,19 +1,17 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using TaskToOctopus.Server.Services;
 
-namespace TaskToOctopus.Server.Services
+namespace TaskToOctopus.Server
 {
-    public class StartWorker : BackgroundService
+    public class Startup : BackgroundService
     {
-        private readonly ILogger<StartWorker> _logger;
+        private readonly ILogger<Startup> _logger;
         private readonly IMonitorService _monitor;
-        public StartWorker(ILogger<StartWorker> logger, IMonitorService monitor)
+        public Startup(ILogger<Startup> logger, IMonitorService monitor)
         {
             _logger = logger;
             _monitor = monitor;
@@ -24,8 +22,8 @@ namespace TaskToOctopus.Server.Services
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                //if(!_monitor.Status)
-                _monitor.StartMonitorLoop();
+
+                _monitor.StartMonitorLoop(stoppingToken);
                 await Task.Delay(15000, stoppingToken);
             }
         }

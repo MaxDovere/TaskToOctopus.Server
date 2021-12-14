@@ -2,15 +2,11 @@ using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using TaskToOctopus.Infrastructure.Interfaces;
 
-namespace TaskToOctopus.Server.Services
+namespace TaskToOctopus.Infrastructure
 {
-    public interface IBackgroundTaskQueue
-    {
-        ValueTask QueueBackgroundWorkItemAsync(Func<string, CancellationToken, ValueTask> workItem);
 
-        ValueTask<Func<string, CancellationToken, ValueTask>> DequeueAsync(CancellationToken cancellationToken);
-    }
 
     //public delegate bool TaskWorker(object[] args);
     public class BackgroundTaskQueue : IBackgroundTaskQueue

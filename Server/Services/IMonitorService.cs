@@ -1,7 +1,10 @@
-﻿namespace TaskToOctopus.Server.Services
+﻿using System.Threading;
+
+namespace TaskToOctopus.Server.Services
 {
     public interface IMonitorService
     {
-        void StartMonitorLoop();
+        void StartMonitorLoop(CancellationToken cancellationToken);
+        void StopMonitorLoop(CancellationToken cancellationToken, string message);
     }
 }

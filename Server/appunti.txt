@@ -1,0 +1,52 @@
+﻿//programm
+        //using var host = CreateHostBuilder(args).Build();
+
+        //await host.StartAsync();
+
+        //var monitorLoop = host.Services.GetRequiredService<MonitorService>();
+        //monitorLoop.StartMonitorLoop();
+
+        //await host.WaitForShutdownAsync();
+
+
+//using var host = Host.CreateDefaultBuilder(args)
+//    .ConfigureServices((hostContext, services) =>
+//    {
+
+//        var configBuilder = new ConfigurationBuilder()
+//                                .AddJsonFile("appsettings.json", optional: true);
+
+//        var config = configBuilder.Build();
+
+//        var sp = new ServiceCollection()
+//            .AddLogging(b => b.AddConsole())
+//            .AddSingleton<IConfiguration>(config)
+//            .BuildServiceProvider();
+
+//        var logger = sp.GetService<ILoggerFactory>().CreateLogger<OctopusNotificationsDbContext>();
+
+//        logger.LogDebug("Starting");
+
+//        services.AddDbContext<OctopusNotificationsDbContext>(options =>
+//            options.UseSqlServer(config.GetConnectionString("OctopusNotifications")));
+
+//        services.AddSingleton<MonitorLoop>();
+//        services.AddHostedService<QueuedHostedService>();
+//        services.AddSingleton<IBackgroundTaskQueue>(ctx =>
+//            {
+//                if (!int.TryParse(hostContext.Configuration["QueueCapacity"], out var queueCapacity))
+//                    queueCapacity = 100;
+//                return new BackgroundTaskQueue(queueCapacity);
+//            });
+//        services.AddTransient<IUnitOfWork, UnitOfWork>();
+//        services.AddSingleton<IConsumeToNotifications, ConsumeToNotifications>();
+
+//    })
+//    .Build();
+
+//await host.StartAsync();
+
+//var monitorLoop = host.Services.GetRequiredService<MonitorLoop>();
+//monitorLoop.StartMonitorLoop();
+
+//await host.WaitForShutdownAsync();

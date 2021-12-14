@@ -13,7 +13,7 @@ namespace SignalRDbUpdates
 {
     public class MvcApplication : System.Web.HttpApplication
     {
-        string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+        string connString = ConfigurationManager.ConnectionStrings["CRMSSOEntities"].ConnectionString;
 
         protected void Application_Start()
         {

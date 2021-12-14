@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using TaskToOctopus.Server.Models;
+using TaskToOctopus.Domain.Model;
 
-namespace TaskToOctopus.Server.Services
+namespace TaskToOctopus.Infrastructure.Interfaces
 {
     public interface IConsumeToNotifications
     {
@@ -11,6 +11,8 @@ namespace TaskToOctopus.Server.Services
         Task CallNotificationMessages(string userid, WorkerModel work);
         Task<List<WorkerModel>> GetWorkerNotificator(CancellationToken token);
         ValueTask BuildWorkNotify(string json, CancellationToken token);
+
+        bool IsValidConnection();
 
     }
 }

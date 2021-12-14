@@ -37,7 +37,9 @@ namespace SignalRDbUpdates.Hubs
             // After the code in this method completes, the client is informed that
             // the connection is established; for example, in a JavaScript client,
             // the start().done callback is executed.
-            _userId = Guid .Parse("949fcabb-2bdf-454e-bb87-ff47dc13b538"); // Guid.NewGuid();
+            
+            // utente simulato //_userId = Guid .Parse("949fcabb-2bdf-454e-bb87-ff47dc13b538"); // Guid.NewGuid();
+            _userId = Guid.Parse("97B3920F-14D6-4230-981F-EA61D2538A05"); // Guid.NewGuid();
             string connectionId = Context.ConnectionId;
             var result = _uow.SubscribeUserHubConnectionId(_userId.ToString(), connectionId);
 

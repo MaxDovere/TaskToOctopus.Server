@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using TaskToOctopus.Server.ActionModels;
-using TaskToOctopus.Server.Models;
+using TaskToOctopus.Domain.Model;
+using TaskToOctopus.Infrastructure.Interfaces;
 
 namespace TaskToOctopus.Server.Services
 {
@@ -16,6 +16,8 @@ namespace TaskToOctopus.Server.Services
         private readonly IBackgroundTaskQueue _taskQueue;
         private readonly ILogger _logger;
         private readonly CancellationToken _cancellationToken;
+        private readonly CancellationTokenSource controller = new CancellationTokenSource();
+        private int hashCode = 0;
 
         public MonitorService(IConsumeToNotifications notify,
             IBackgroundTaskQueue taskQueue,
@@ -28,34 +30,72 @@ namespace TaskToOctopus.Server.Services
             _cancellationToken = applicationLifetime.ApplicationStopping;
         }
 
-        public void StartMonitorLoop()
+        public void StartMonitorLoop(CancellationToken cancellationToken)
         {
             _logger.LogInformation("MonitorAsync Loop is starting.");
+            cancellationToken.Register(() =>
+            {
+                StopMonitorLoop(_cancellationToken, "Request cancelled!");
+            });
+            /*
+             * Accettarsi che la connessione sia corretta validando il contatto con il database eventuale 
+            */
+            try
+            {
+                var test = _notify.IsValidConnection();
+                if (!test) controller.CancelAfter(1); //valore in millesecondi.
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message);
+                throw;
+            }
+
 
             // Run a console user input loop in a background thread
             Task.Run(async () => await MonitorAsync());
 
         }
 
+        public void StopMonitorLoop(CancellationToken cancellationToken, string message)
+        {
+            _logger.LogInformation(message);
+            controller.Dispose();
+        }
+
         private async ValueTask MonitorAsync()
         {
-            while (!_cancellationToken.IsCancellationRequested)
+            
+            try
             {
-                IEnumerable<WorkerModel> workers =
-                        Task.Run(
-                                () => _notify.GetWorkerNotificator(_cancellationToken)
-                        ).Result;
-
-                if (workers != null)
+                while (!_cancellationToken.IsCancellationRequested)
                 {
-                    foreach (var work in workers)
+                    List<WorkerModel> workers =
+                            Task.Run(
+                                    () => _notify.GetWorkerNotificator(_cancellationToken)
+                            ).Result;
+
+                    if (workers != null && workers.Count > 0 && workers.GetHashCode() != hashCode)
                     {
-                        string json = JsonConvert.SerializeObject(work);
-                        _notify.WorkersToNotify.Add(work.UserId, json); // $"BuildWorkNotify?userid:{work.UserId}");
-                        // Enqueue a background work item
-                        await _taskQueue.QueueBackgroundWorkItemAsync(_notify.BuildWorkNotify);
+                        hashCode = workers.GetHashCode();
+                        foreach (var work in workers)
+                        {
+                            string userid = work.UserId;
+                            if (_notify.WorkersToNotify.ContainsKey(work.UserId))
+                            {
+                                _notify.WorkersToNotify.Remove(userid);
+                            }
+                            string json = JsonConvert.SerializeObject(work);
+                            _notify.WorkersToNotify.Add(userid, json); // $"BuildWorkNotify?userid:{work.UserId}");
+                                                                                // Enqueue a background work item
+                            await _taskQueue.QueueBackgroundWorkItemAsync(_notify.BuildWorkNotify);
+                        }
                     }
                 }
+            }
+            catch(Exception e)
+            {
+                _logger.LogError(e.Message);
             }
         }
     }

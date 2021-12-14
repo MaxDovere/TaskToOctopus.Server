@@ -3,8 +3,9 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using TaskToOctopus.Infrastructure.Interfaces;
 
-namespace TaskToOctopus.Server.Services
+namespace TaskToOctopus.Infrastructure
 {
    public class QueuedHostedService : BackgroundService
     {

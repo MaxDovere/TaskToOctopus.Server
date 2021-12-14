@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TaskToOctopus.Server.ActionModels;
-using TaskToOctopus.Server.Models;
-using TaskToOctopus.Server.Repositories;
+using TaskToOctopus.Domain.Model;
+using TaskToOctopus.Infrastructure.Interfaces;
+using TaskToOctopus.Infrastructure.Repositories;
 
-namespace TaskToOctopus.Server.Services
+namespace TaskToOctopus.Infrastructure
 {
     public class ConsumeToNotifications : IConsumeToNotifications
     {
@@ -91,7 +91,8 @@ namespace TaskToOctopus.Server.Services
             }
             catch(Exception e)
             {
-                Console.WriteLine(e.Message);
+                //Console.WriteLine(e.Message);
+                _logger.LogError(e.Message);
             }
                 //delayLoop++;
 
@@ -125,6 +126,11 @@ namespace TaskToOctopus.Server.Services
 
             //_logger.LogInformation($"Task notificato! {json}");
             await Task.CompletedTask;
+        }
+
+        public bool IsValidConnection()
+        {
+            return _uow.IsValidateDB(); 
         }
     }
 }

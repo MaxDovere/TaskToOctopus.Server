@@ -18,8 +18,8 @@ namespace SignalRDbUpdates.Repositories
             var messages = new List<AspNetUsersNot>();
             using (var connection = new SqlConnection(_connString))
             {
-                string sql = "UPDATE dbo.AspNetUsersNot SET" +
-                             "[StatusID] = 2005 " +
+                string sql = "UPDATE dbo.AspNetUsersNot SET " +
+                             "[StatusID] = 2005, " +
                              "[NotifiedDateTimeUtc] = GETUTCDATE() " +
                             "WHERE StatusID = 2000 " +
                             "AND NotificationDateTimeUtc BETWEEN DATEADD(minute, -111112, GETUTCDATE()) " +
