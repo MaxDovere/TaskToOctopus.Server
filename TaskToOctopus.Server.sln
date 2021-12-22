@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalRClient", "Client\Sig
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskToOctopus.Domain", "TaskToOctopus.Domain\TaskToOctopus.Domain.csproj", "{DE81DCA3-3811-466D-AAAC-148AFE2EEBD6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskToOctopus.DomainApi", "TaskOnOctopus.DomainApi\TaskToOctopus.DomainApi.csproj", "{36D9F5AC-FAC2-43C7-99C2-DA18FADAC9DD}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskToOctopus.Persistence", "TaskToOctopus.Persistence\TaskToOctopus.Persistence.csproj", "{DA8199D8-6BA0-4D02-B35A-B7C5E79C0DBD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskToOctopus.RestAdapter", "TaskToOctopus.RestAdapter\TaskToOctopus.RestAdapter.csproj", "{6B11D9B9-B041-41EA-ABE0-27A22C7660AF}"
