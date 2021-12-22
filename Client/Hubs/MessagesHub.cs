@@ -26,6 +26,7 @@ namespace SignalRDbUpdates.Hubs
             }
             else
             {
+                //_context.Clients.User(_userId.ToString()).Client(connectionId).notificationToMessages(_userId.ToString());
                 _context.Clients.Client(connectionId).notificationToMessages(_userId.ToString());
             }
         }

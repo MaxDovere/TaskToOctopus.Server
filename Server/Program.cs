@@ -29,14 +29,16 @@ public class Program
 
                 var config = configBuilder.Build();
 
-                Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(config).CreateLogger();
+                Log.Logger = new LoggerConfiguration()
+                            .ReadFrom
+                            .Configuration(config)
+                            .CreateLogger();
 
                 AppSettings = new AppSettings();
                 config.Bind(AppSettings);
-                //AppSettings.ConnectionString = config.GetConnectionString("Coo");
+
                 Configuration = config;
 
-                //var sp = new ServiceCollection()
                 var sp = services.AddLogging(b => b.AddConsole())
                     .AddSingleton<IConfiguration>(Configuration)
                     .BuildServiceProvider();
