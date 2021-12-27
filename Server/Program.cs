@@ -3,61 +3,77 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.EventLog;
-using Serilog;
+using NLog.Web;
+using System;
 using TaskToOctopus.Domain.Services;
-using TaskToOctopus.Infrastructure;
 using TaskToOctopus.Infrastructure.Extensions;
 using TaskToOctopus.Persistence;
-using TaskToOctopus.Persistence.Context;
+using TaskToOctopus.Persistence.Logging;
 using TaskToOctopus.Server;
 using TaskToOctopus.Server.Services;
 
 public class Program
 {
     public static IConfiguration Configuration { get; set; }
-    public static AppSettings AppSettings { get; set; }
+    public static AppSettings appSettings { get; set; }
 
+    private static readonly INLogger<Program> _logger = new NLogger<Program>();
     public static void Main(string[] args)
     {
-        CreateHostBuilder(args).Build().Run();
+
+        try
+        {
+            _logger.LogInformation("Starting up the service");
+            CreateHostBuilder(args).Build().Run();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogFatal(ex, "There was a problem starting the serivce");
+        }
+        finally
+        {
+            NLog.LogManager.Shutdown();
+        }
     }
     public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
             .ConfigureServices((hostContext, services) => {
                 var configBuilder = new ConfigurationBuilder()
-                                    .AddJsonFile("appsettings.json", optional: true);
+                                       .SetBasePath(System.IO.Directory.GetCurrentDirectory())
+                                       .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                                       .AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true)
+                                       .Build();
 
-                var config = configBuilder.Build();
+                appSettings = new AppSettings();
+                configBuilder.Bind(appSettings);
 
-                Log.Logger = new LoggerConfiguration()
-                            .ReadFrom
-                            .Configuration(config)
-                            .CreateLogger();
+                Configuration = configBuilder;
 
-                AppSettings = new AppSettings();
-                config.Bind(AppSettings);
+                //var sp = services.AddLogging(b => b.AddConsole())
+                //    .AddSingleton<IConfiguration>(Configuration)
+                //    .BuildServiceProvider();
 
-                Configuration = config;
+                services.AddSingleton<IConfiguration>(Configuration);
 
-                var sp = services.AddLogging(b => b.AddConsole())
-                    .AddSingleton<IConfiguration>(Configuration)
-                    .BuildServiceProvider();
+                services.AddNLogLogging(Configuration);
+
+                _logger.LogInformation("Startup services Install!");
+
+                services.AddPersistence(appSettings);
                 
-                services.AddPersistence(AppSettings);
-                
-                services.AddDomain(AppSettings);
+                services.AddDomain(appSettings);
 
-                services.AddRepositories(AppSettings);
+                services.AddRepositories(appSettings);
                 
-                services.AddInfrastructure(AppSettings);
+                services.AddInfrastructure(appSettings);
                 
-                services.AddServices(AppSettings);
+                services.AddServices(appSettings);
 
-                var logger = sp.GetService<ILoggerFactory>().CreateLogger<CRMSSODbContext>();
-                
-                Log.Logger.Debug("Starting Appplication TaskToOctopus.Server");
 
-                logger.LogDebug("Starting Logger Context DB");
+                //var logger = sp.GetService<ILoggerFactory>().CreateLogger<CRMSSODbContext>();
+                //logger.LogDebug("Starting Logger Context DB");
+
+                _logger.LogDebug("Starting Appplication TaskToOctopus.Server");
                 
                 /*
                  * istanzio l'oggetto che sarà il monitor degli altri oggetti per le parti in background
@@ -72,5 +88,10 @@ public class Program
                     });
 
             })
-            .UseWindowsService();
+            .UseWindowsService()
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+            })
+            .UseNLog();
 }

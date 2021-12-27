@@ -4,18 +4,19 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskToOctopus.Infrastructure.Interfaces;
+using TaskToOctopus.Persistence.Logging;
 
 namespace TaskToOctopus.Infrastructure
 {
-   public class QueuedHostedService : BackgroundService
+    public class QueuedHostedService : BackgroundService
     {
-        private readonly ILogger<QueuedHostedService> _logger;
+        private readonly INLogger<QueuedHostedService> _logger = new NLogger<QueuedHostedService>();
+
         public IBackgroundTaskQueue TaskQueue { get; }
 
-        public QueuedHostedService(IBackgroundTaskQueue taskQueue, ILogger<QueuedHostedService> logger)
+        public QueuedHostedService(IBackgroundTaskQueue taskQueue)
         {
             TaskQueue = taskQueue;
-            _logger = logger;
         }
         //public int GetHashCode(Validator v)
         //{
@@ -27,12 +28,12 @@ namespace TaskToOctopus.Infrastructure
         //}
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            string json = ""; // eventuale parametro json da passare al processo
+
             _logger.LogInformation(
                 $"Queued Hosted Service is running.{Environment.NewLine}" +
-                $"{Environment.NewLine}Tap W to add a work item to the " +
                 $"background queue.{Environment.NewLine}");
             
-            string json = "dato numero q1";
 
             await BackgroundProcessing(json, stoppingToken);
         }
@@ -54,8 +55,7 @@ namespace TaskToOctopus.Infrastructure
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, 
-                        "Error occurred executing {WorkItem}.", nameof(workItem));
+                    _logger.LogError(ex, $"Error occurred executing {nameof(workItem)}.");
                 }                
             }
         }

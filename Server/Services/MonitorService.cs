@@ -1,38 +1,37 @@
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskToOctopus.Domain.Model;
 using TaskToOctopus.Infrastructure.Interfaces;
+using TaskToOctopus.Persistence.Logging;
 
 namespace TaskToOctopus.Server.Services
 {
     public class MonitorService : IMonitorService
     {
-        private readonly IConsumeToNotifications _notify;
+        private static INLogger<MonitorService> _logger = new NLogger<MonitorService>();
+
+        private readonly IConsumeToNotifications _consumeNotify;
         private readonly IBackgroundTaskQueue _taskQueue;
-        private readonly ILogger _logger;
         private readonly CancellationToken _cancellationToken;
         private readonly CancellationTokenSource controller = new CancellationTokenSource();
         private int hashCode = 0;
 
-        public MonitorService(IConsumeToNotifications notify,
+        public MonitorService(IConsumeToNotifications consume,
             IBackgroundTaskQueue taskQueue,
-            ILogger<MonitorService> logger,
             IHostApplicationLifetime applicationLifetime)
         {
-            _notify = notify;
+            _consumeNotify = consume;
             _taskQueue = taskQueue;
-            _logger = logger;
             _cancellationToken = applicationLifetime.ApplicationStopping;
         }
 
         public void StartMonitorLoop(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("MonitorAsync Loop is starting.");
             cancellationToken.Register(() =>
             {
                 StopMonitorLoop(_cancellationToken, "Request cancelled!");
@@ -42,19 +41,17 @@ namespace TaskToOctopus.Server.Services
             */
             try
             {
-                var test = _notify.IsValidConnection();
-                if (!test) controller.CancelAfter(1); //valore in millesecondi.
+                if(!_consumeNotify.IsValidConnection())
+                    controller.CancelAfter(1); //valore in millesecondi.
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message);
+                _logger.LogFatal(e.Message);
                 throw;
             }
-
-
+            _logger.LogInformation("MonitorAsync Loop is starting.");
             // Run a console user input loop in a background thread
-            Task.Run(async () => await MonitorAsync());
-
+            Task.Run(async () => await MonitorAsync()).Wait();
         }
 
         public void StopMonitorLoop(CancellationToken cancellationToken, string message)
@@ -62,40 +59,70 @@ namespace TaskToOctopus.Server.Services
             _logger.LogInformation(message);
             controller.Dispose();
         }
-
-        private async ValueTask MonitorAsync()
+        private Task<List<WorkerModel>> WorkerJob(IConsumeToNotifications notify, CancellationToken _cancellationToken)
         {
-            
+            return Task.Run( () =>
+            {
+                try
+                {
+                    lock (notify)
+                    {
+                        //Thread.Sleep(1000);
+                        return notify.GetWorkerNotificator(_cancellationToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, ex.Message);
+                }
+                return default;
+            });
+            //return (Task<List<WorkerModel>>)Task.CompletedTask;
+        }
+        private async ValueTask MonitorAsync()
+        {            
             try
             {
+                var job = WorkerJob(_consumeNotify, _cancellationToken);
+
                 while (!_cancellationToken.IsCancellationRequested)
                 {
-                    List<WorkerModel> workers =
-                            Task.Run(
-                                    () => _notify.GetWorkerNotificator(_cancellationToken)
-                            ).Result;
+                    List<WorkerModel> workers = new List<WorkerModel>();
+                    
+                    _logger.LogInformation("Worker Job wait Any result.");
 
-                    if (workers != null && workers.Count > 0 && workers.GetHashCode() != hashCode)
+                    workers = await Task.WhenAny(job).Result;
+
+                    //Task.Run(
+                    //        () => _consumeNotify.GetWorkerNotificator(_cancellationToken)
+                    //).Result;
+
+                    if (workers.Any() && workers.GetHashCode() != hashCode)
                     {
                         hashCode = workers.GetHashCode();
                         foreach (var work in workers)
                         {
                             string userid = work.UserId;
-                            if (_notify.WorkersToNotify.ContainsKey(work.UserId))
+                            if (_consumeNotify.WorkersToNotify.ContainsKey(userid))
                             {
-                                _notify.WorkersToNotify.Remove(userid);
+                                _consumeNotify.WorkersToNotify.Remove(userid);
                             }
                             string json = JsonConvert.SerializeObject(work);
-                            _notify.WorkersToNotify.Add(userid, json); // $"BuildWorkNotify?userid:{work.UserId}");
-                                                                                // Enqueue a background work item
-                            await _taskQueue.QueueBackgroundWorkItemAsync(_notify.BuildWorkNotify);
+                            _consumeNotify.WorkersToNotify.Add(userid, json);
+
+                            _logger.LogInformation("Enqueue a background Worker notify.");
+                            await _taskQueue.QueueBackgroundWorkItemAsync(_consumeNotify.BuildWorkNotify);
                         }
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
             }
             catch(Exception e)
             {
-                _logger.LogError(e.Message);
+                _logger.LogError(e, e.Message);
             }
         }
     }

@@ -2,10 +2,17 @@
 {
     public class WorkerModel
     {
-        public string UserId { get; set;}
-        public string BaseUrl { get; set; }
-        public string Endpoint { get; set; }
-        public string Method { get; set; }
 
+        public string UserId { get; }
+        public string BaseUrl { get; }
+        public string Endpoint { get; }
+        public string Method { get; }
+        public WorkerModel(string userId, string baseUrl, string endpoint, string method)
+        {
+            UserId = userId;
+            BaseUrl = baseUrl;
+            Endpoint = endpoint;
+            Method = method;
+        }        
     }
 }

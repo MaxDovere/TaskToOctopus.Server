@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using TaskToOctopus.Infrastructure.Interfaces;
+using TaskToOctopus.Persistence.Logging;
 
 namespace TaskToOctopus.Infrastructure
 {
@@ -11,6 +12,7 @@ namespace TaskToOctopus.Infrastructure
     //public delegate bool TaskWorker(object[] args);
     public class BackgroundTaskQueue : IBackgroundTaskQueue
     {
+        private readonly INLogger<BackgroundTaskQueue> _logger = new NLogger<BackgroundTaskQueue>();
         private readonly Channel<Func<string, CancellationToken, ValueTask>> _queue;
 
         public BackgroundTaskQueue(int capacity)
