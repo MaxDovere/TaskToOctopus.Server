@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TaskToOctopus.Domain.Services;
 using TaskToOctopus.Persistence.Context;
 
-namespace TaskToOctopus.Persistence
+namespace TaskToOctopus.Infrastructure.Extensions
 {
     public static class PersistenceExtensions
     {

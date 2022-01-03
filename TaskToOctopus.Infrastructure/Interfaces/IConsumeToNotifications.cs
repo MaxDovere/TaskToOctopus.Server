@@ -10,7 +10,7 @@ namespace TaskToOctopus.Infrastructure.Interfaces
         SortedDictionary<string, string> WorkersToNotify { get; set; }
         Task CallNotificationMessages(string userid, WorkerModel work);
         Task<List<WorkerModel>> GetWorkerNotificator(CancellationToken token);
-        ValueTask BuildWorkNotify(string json, CancellationToken token);
+        ValueTask BuildWorkNotify(string parameter, CancellationToken token);
 
         bool IsValidConnection();
 

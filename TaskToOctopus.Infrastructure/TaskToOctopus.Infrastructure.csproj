@@ -5,7 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Extensions\DomainExtension.cs" />
+    <Compile Remove="Extensions\ServicesExtension.cs" />
     <Compile Remove="Interfaces\PushNotificationsDequeuer.cs" />
+    <Compile Remove="Repositories\EntityDomain.cs" />
   </ItemGroup>
 
   <ItemGroup>

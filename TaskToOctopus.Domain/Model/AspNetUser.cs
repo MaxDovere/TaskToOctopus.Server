@@ -48,6 +48,9 @@ namespace TaskToOctopus.Domain.Model
 
         [InverseProperty(nameof(AspUsersHubConnection.User))]
         public virtual ICollection<AspUsersHubConnection> AspUsersHubConnections { get; set; }
-        
+        [InverseProperty(nameof(SSODealer.User))]
+        public virtual ICollection<SSODealer> Dealers { get; set; }
+
+
     }
 }

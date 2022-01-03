@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using TaskToOctopus.Domain.Services;
 using TaskToOctopus.Infrastructure.Interfaces;
+using TaskToOctopus.Infrastructure.Services;
 
 namespace TaskToOctopus.Infrastructure.Extensions
 {
@@ -12,7 +13,8 @@ namespace TaskToOctopus.Infrastructure.Extensions
         public static void AddInfrastructure(this IServiceCollection serviceCollection, AppSettings appSettings)
         {
 
-            serviceCollection.AddHostedService<QueuedHostedService>();
+            //serviceCollection.AddHostedService<QueuedHostedService>();
+
             serviceCollection.AddSingleton<IBackgroundTaskQueue>(ctx =>
             {
                 //if (!int.TryParse(hostContext.Configuration["QueueCapacity"], out var queueCapacity))
@@ -23,6 +25,7 @@ namespace TaskToOctopus.Infrastructure.Extensions
 
             serviceCollection.AddSingleton<IConsumeToNotifications, ConsumeToNotifications>();
 
+            serviceCollection.AddSingleton<IMonitorService, MonitorService>();
         }
         public static void AddNLogLogging(this IServiceCollection serviceCollection, IConfiguration configuration)
         {

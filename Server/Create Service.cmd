@@ -1,0 +1,1 @@
+﻿sc create "Task Octopus Notificator Service 1.0" binpath="C:\TaskToOctopus\publish\TaskToOctopus.Server.exe"

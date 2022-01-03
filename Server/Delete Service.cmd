@@ -1,0 +1,1 @@
+﻿sc delete "Task Octopus Notificator Service 1.0"

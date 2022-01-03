@@ -5,6 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Port\**" />
+    <EmbeddedResource Remove="Port\**" />
+    <None Remove="Port\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="DealDomain.cs" />
   </ItemGroup>
 

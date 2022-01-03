@@ -21,5 +21,6 @@ namespace TaskToOctopus.Domain.Model
         [ForeignKey(nameof(UserID))]
         [InverseProperty(nameof(AspNetUser.AspNetUsersNots))]
         public virtual AspNetUser User { get; set; }
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -6,19 +7,23 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskToOctopus.Domain.Model;
+using TaskToOctopus.Domain.Services;
 using TaskToOctopus.Infrastructure.Interfaces;
 using TaskToOctopus.Infrastructure.Repositories;
-using TaskToOctopus.Persistence.Logging;
 
 namespace TaskToOctopus.Infrastructure
 {
     public class ConsumeToNotifications : IConsumeToNotifications
     {
-        private readonly INLogger<ConsumeToNotifications> _logger = new NLogger<ConsumeToNotifications>();
+        //private readonly INLogger<ConsumeToNotifications> _logger = new NLogger<ConsumeToNotifications>();
+        private readonly ILogger<ConsumeToNotifications> _logger;
         private readonly IUnitOfWork _uow;
+        private readonly AppSettings _appSettings;
         public SortedDictionary<string, string> WorkersToNotify { get; set; } = new SortedDictionary<string, string>();
-        public ConsumeToNotifications(IUnitOfWork uow)
+        public ConsumeToNotifications(ILogger<ConsumeToNotifications> logger, IUnitOfWork uow, AppSettings appSettings)
         {
+            _appSettings = appSettings;
+            _logger = logger;
             _uow = uow;
         }
         public Task<List<WorkerModel>> GetWorkerNotificator(CancellationToken token)
@@ -28,23 +33,26 @@ namespace TaskToOctopus.Infrastructure
             var messages = _uow.GetMessagesToNotifiction();
             if (messages == null)
                 return Task.FromResult(wks.ToList());
-            
-            var workers = (from table in messages 
-                       select table)
+
+            var workers = (from table in messages
+                           select table)
                        .Select(field => field.UserID)
                        .Distinct()
                        .ToList();
-            
-            // link localhost "http://localhost:56179",
 
             foreach (var item in workers)
             {
-                wks.Add(new WorkerModel(item, "http://localhost:54286", "api/backend/messages", "GET"));
+                SSODealer info = _uow.GetActiveDealerInfo(item);
+
+                if(_appSettings.Settings.DefaultEndpoint.Length == 0)
+                    wks.Add(new WorkerModel(item, info.CRMLink, "api/backend/messages", "GET"));
+                else
+                    wks.Add(new WorkerModel(item, _appSettings.Settings.DefaultEndpoint, "api/backend/messages", "GET"));
             }
 
             return Task.FromResult(wks.ToList());
         }
-        public async ValueTask BuildWorkNotify(string json, CancellationToken token)
+        public async ValueTask BuildWorkNotify(string parameter, CancellationToken token)
         {
             /*
              * Prende il primo contenutore di parametri salvato sulla SortedDictionary 
@@ -54,36 +62,36 @@ namespace TaskToOctopus.Infrastructure
             string datajson = data.Value.ToString();
             WorkerModel work = JsonConvert.DeserializeObject<WorkerModel>(datajson);
 
-            _logger.LogInformation($"Queued Background Task {data.Key} is starting. External parameter (json) {json}");
+            _logger.LogInformation($"Queued Background Task {data.Key} is starting.");
 
             try
-            {        
-                _logger.LogWarning($"Queued Background Task {data.Key} is running.");
+            {
+                //_logger.LogWarning($"Queued Background Task {data.Key} is running.");
                 /*
                  * preso il dato per il worker, se la lista è ancora piena elimina la sua chiave nella lista
                  * cosi lascia al successivo worker di prendersi il suo parametro.
                 */
                 if (WorkersToNotify.Count > 0) WorkersToNotify.Remove(data.Key);
-                
-                _logger.LogInformation($"Queued Background Task {data.Key} - {datajson}");
+
+                //_logger.LogInformation($"Queued Background Task {data.Key} - {datajson}");
 
                 await CallNotificationMessages(data.Key, work);
-                
-                _logger.LogWarning($"Queued Background Task {data.Key} is complete.");
+
+                _logger.LogInformation($"Queued Background Task {data.Key} is complete.");
             }
             catch (OperationCanceledException op)
             {
                 // Prevent throwing if the Delay is cancelled
-                _logger.LogError(op.Message);
+                _logger.LogError(op, op.Message);
 
             }
             catch (Exception e)
             {
                 //Console.WriteLine(e.Message);
-                _logger.LogError(e.Message);
+                _logger.LogError(e, e.Message);
             }
 
-            if(token.IsCancellationRequested)
+            if (token.IsCancellationRequested)
             {
                 _logger.LogWarning($"Queued Background Task {data.Key} was cancelled.");
             }
@@ -93,7 +101,7 @@ namespace TaskToOctopus.Infrastructure
             try
             {
                 var client = new RestClient(work.BaseUrl);
-                var request = new RestRequest(work.Endpoint, work.Method == "GET" ? Method.GET : Method.POST); 
+                var request = new RestRequest(work.Endpoint, work.Method == "GET" ? Method.GET : Method.POST);
                 if (work.Method == "POST")
                 {
                     request.AddJsonBody(work);
@@ -108,21 +116,23 @@ namespace TaskToOctopus.Infrastructure
 
                 var response = client.Execute(request);
 
-                if(response.StatusCode != System.Net.HttpStatusCode.OK)
-                    _logger.LogWarning($"StatusCode: {response.StatusCode} - Description: " + response.ErrorMessage);
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    _logger.LogInformation($"StatusCode: {response.StatusCode} - Destination: {response.ResponseUri.ToString()} - Description: {response.Content}");
+                else
+                    _logger.LogWarning($"StatusCode: {response.StatusCode} - Destination: {response.ResponseUri?.ToString()} - Description: {(response.ErrorMessage == null ? "Il link in cui notificare non sembra attivo o connesso!" : response.ErrorMessage)}");
+
             }
             catch (Exception e)
             {
-                _logger.LogWarning(e.Message);
+                _logger.LogWarning(e, e.Message);
             }
 
-            _logger.LogWarning($"Task notificato! {System.Net.HttpStatusCode.OK}");
             await Task.CompletedTask;
         }
 
         public bool IsValidConnection()
         {
-            return _uow.IsValidateDB(); 
+            return _uow.IsValidateDB();
         }
     }
 }
