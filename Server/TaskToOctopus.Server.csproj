@@ -59,10 +59,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Create Service.cmd">
+	  <None Update="CreateService.cmd">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
-	  <None Update="Delete Service.cmd">
+	  <None Update="DeleteService.cmd">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>

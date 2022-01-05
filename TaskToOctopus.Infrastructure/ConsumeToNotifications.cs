@@ -30,24 +30,22 @@ namespace TaskToOctopus.Infrastructure
         {
             var wks = new List<WorkerModel>();
 
-            var messages = _uow.GetMessagesToNotifiction();
-            if (messages == null)
+            var workers = _uow.GetActiveDealerInfo();
+            if (workers == null)
                 return Task.FromResult(wks.ToList());
 
-            var workers = (from table in messages
-                           select table)
-                       .Select(field => field.UserID)
-                       .Distinct()
-                       .ToList();
+            //var workers = (from table in messages
+            //               select table)
+            //           .Select(field => field.UserID)
+            //           .Distinct()
+            //           .ToList();
 
             foreach (var item in workers)
             {
-                SSODealer info = _uow.GetActiveDealerInfo(item);
-
                 if(_appSettings.Settings.DefaultEndpoint.Length == 0)
-                    wks.Add(new WorkerModel(item, info.CRMLink, "api/backend/messages", "GET"));
+                    wks.Add(new WorkerModel(item.SSODealerID, item.SSODealerID, item.CRMLink, "api/backend/messages", "GET"));
                 else
-                    wks.Add(new WorkerModel(item, _appSettings.Settings.DefaultEndpoint, "api/backend/messages", "GET"));
+                    wks.Add(new WorkerModel(item.SSODealerID, item.SSODealerID, _appSettings.Settings.DefaultEndpoint, "api/backend/messages", "GET"));
             }
 
             return Task.FromResult(wks.ToList());
@@ -58,18 +56,20 @@ namespace TaskToOctopus.Infrastructure
              * Prende il primo contenutore di parametri salvato sulla SortedDictionary 
              * e passati dall'istanza del worker 
             */
-            var data = WorkersToNotify.First();
+            if (WorkersToNotify == null)
+                await Task.CompletedTask;
+
+            var data = WorkersToNotify.OrderBy(x => x.Key).First();
             string datajson = data.Value.ToString();
             WorkerModel work = JsonConvert.DeserializeObject<WorkerModel>(datajson);
-
             _logger.LogInformation($"Queued Background Task {data.Key} is starting.");
 
             try
             {
                 //_logger.LogWarning($"Queued Background Task {data.Key} is running.");
                 /*
-                 * preso il dato per il worker, se la lista è ancora piena elimina la sua chiave nella lista
-                 * cosi lascia al successivo worker di prendersi il suo parametro.
+                    * preso il dato per il worker, se la lista è ancora piena elimina la sua chiave nella lista
+                    * cosi lascia al successivo worker di prendersi il suo parametro.
                 */
                 if (WorkersToNotify.Count > 0) WorkersToNotify.Remove(data.Key);
 
@@ -83,18 +83,21 @@ namespace TaskToOctopus.Infrastructure
             {
                 // Prevent throwing if the Delay is cancelled
                 _logger.LogError(op, op.Message);
-
+                await Task.FromException(op);
             }
             catch (Exception e)
             {
                 //Console.WriteLine(e.Message);
                 _logger.LogError(e, e.Message);
+                await Task.FromException(e);
             }
 
             if (token.IsCancellationRequested)
             {
                 _logger.LogWarning($"Queued Background Task {data.Key} was cancelled.");
+                await Task.FromCanceled(token);
             }
+            await Task.CompletedTask;
         }
         public async Task CallNotificationMessages(string userid, WorkerModel work)
         {
@@ -108,7 +111,7 @@ namespace TaskToOctopus.Infrastructure
                 }
                 if (work.Method == "GET")
                 {
-                    request.AddQueryParameter("userid", work.UserId);
+                    request.AddQueryParameter("dealerkey", work.SSODealerID);
                 }
 
                 request.AddHeader("origin", "http://tasktooctopus.net");

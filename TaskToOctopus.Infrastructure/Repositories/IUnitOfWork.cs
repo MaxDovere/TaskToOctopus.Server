@@ -6,8 +6,7 @@ namespace TaskToOctopus.Infrastructure.Repositories
     public interface IUnitOfWork
     {
         bool IsValidateDB();
-        IEnumerable<AspNetUsersNot> GetMessagesToNotifiction();
+        IEnumerable<DealerInfoModel> GetActiveDealerInfo();
         bool IsThereNotifications();
-        SSODealer GetActiveDealerInfo(string userid);
     }
 }

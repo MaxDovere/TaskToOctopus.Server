@@ -15,7 +15,7 @@ namespace TaskToOctopus.Persistence.Context
             : base(options)
         {
         }
-        public virtual DbSet<SSODealer> SSODealers { get; set; }
+        public virtual DbSet<DealerInfoModel> DealerInfo { get; set; }
         public virtual DbSet<AspNetUser> AspNetUsers { get; set; }
         public virtual DbSet<AspNetUsersNot> AspNetUsersNots { get; set; }
         public virtual DbSet<AspUsersHubConnection> AspUsersHubConnections { get; set; }
@@ -35,15 +35,6 @@ namespace TaskToOctopus.Persistence.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("Relational:Collation", "Latin1_General_CI_AS");
-
-            modelBuilder.Entity<SSODealer>(entity =>
-            {
-                entity.HasKey(e => new { e.Id });
-                entity.HasOne(d => d.User )
-                    .WithMany(p => p.Dealers )
-                    .HasForeignKey(d => d.Id)
-                    .HasConstraintName("FK_SSODelaers_AspNetUsers");
-            });
 
             modelBuilder.Entity<AspNetUsersNot>(entity =>
             {

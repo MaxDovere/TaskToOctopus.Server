@@ -19,7 +19,7 @@ namespace TaskToOctopus.Infrastructure.Repositories
             _context = context;
         }
         
-        public IEnumerable<AspNetUsersNot> GetMessagesToNotifiction()
+        public IEnumerable<DealerInfoModel> GetActiveDealerInfo()
         {
             
             /* Massimo Dovere 26.12.2021
@@ -27,18 +27,18 @@ namespace TaskToOctopus.Infrastructure.Repositories
              * Lo scopo è notificare i messaggi e il clients web si occuperò di sapere chi è attivo in quel momento.
              */
 
-            string sql2 = "SP_GetPendingNotifications";
+            string sql = "SP_GetPendingNotifications";
             
-            List<AspNetUsersNot> messages = new List<AspNetUsersNot>();
+            List<DealerInfoModel> dealers = new List<DealerInfoModel>();
 
             try
             {
-                messages = _context.AspNetUsersNots.FromSqlRaw(sql2).AsNoTracking().ToList();
-                return messages;
+                dealers = _context.DealerInfo.FromSqlRaw<DealerInfoModel>(sql).AsNoTracking().ToList();
+                return dealers;
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message);
+                _logger.LogError(e, e.Message);
             }
             return default;
         }
@@ -49,15 +49,15 @@ namespace TaskToOctopus.Infrastructure.Repositories
             try
             {
 
-
-                var workers = _context.AspNetUsersNots.FromSqlRaw(sql).AsNoTracking().FirstOrDefault();
+                var workers = _context.DealerInfo.FromSqlRaw<DealerInfoModel>(sql).AsNoTracking().ToList();
+                //var workers = _context.AspNetUsersNots.FromSqlRaw(sql).AsNoTracking().FirstOrDefault();
                 if (workers == null)
                     return false;
-                return workers.StatusID == 0 ? false : true;
+                return workers.Any();
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message);
+                _logger.LogError(e, e.Message);
             }
             //    /*
             //     * Per ora recupero i messaggi ma non li mando al controller perchè una volta chiamato
@@ -70,24 +70,24 @@ namespace TaskToOctopus.Infrastructure.Repositories
             //        return await Task.FromResult(true);
             return false;
         }
-        public SSODealer GetActiveDealerInfo(string userid)
-        {
-            AspNetUser user = new AspNetUser();
-            SSODealer info = new SSODealer();
+        //public SSODealer GetActiveDealerInfo(string userid)
+        //{
+        //    AspNetUser user = new AspNetUser();
+        //    SSODealer info = new SSODealer();
 
-            try
-            {
-                user = _context.AspNetUsers.Where(x => x.Id == userid).FirstOrDefault();
-                if (user != null)
-                    info = _context.SSODealers.Where(x => x.Id == user.DealerKey).FirstOrDefault();
-                return info;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, e.Message);
-            }
-            return default;
-        }
+        //    try
+        //    {
+        //        user = _context.AspNetUsers.Where(x => x.Id == userid).FirstOrDefault();
+        //        if (user != null)
+        //            info = _context.SSODealers.Where(x => x.Id == user.DealerKey).FirstOrDefault();
+        //        return info;
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        _logger.LogError(e, e.Message);
+        //    }
+        //    return default;
+        //}
 
         public bool IsValidateDB()
         {
@@ -100,7 +100,7 @@ namespace TaskToOctopus.Infrastructure.Repositories
             }
             catch(Exception e)
             {
-                _logger.LogError(e.Message);
+                _logger.LogError(e, e.Message);
                 return false;
             }
         }
