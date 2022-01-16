@@ -71,15 +71,15 @@ namespace TaskToOctopus.Infrastructure.Services
                         hashCode = workers.GetHashCode();
                         foreach (var work in workers)
                         {
-                            string userid = work.UserId;
-                            if (_consumeNotify.WorkersToNotify.ContainsKey(userid))
+                            string SSODealerID = work.SSODealerID;
+                            if (_consumeNotify.WorkersToNotify.ContainsKey(SSODealerID))
                             {
-                                _consumeNotify.WorkersToNotify.Remove(userid);
+                                _consumeNotify.WorkersToNotify.Remove(SSODealerID);
                             }
                             string json = JsonConvert.SerializeObject(work);
-                            _consumeNotify.WorkersToNotify.Add(userid, json);
+                            _consumeNotify.WorkersToNotify.Add(SSODealerID, json);
 
-                            _logger.LogInformation($"Enqueue a background Worker {userid} notify.");
+                            _logger.LogInformation($"Enqueue a background Worker {SSODealerID} notify.");
 
                             await _taskQueue.QueueBackgroundWorkItemAsync(_consumeNotify.BuildWorkNotify);
                             await Task.Delay(TimeSpan.FromSeconds(5), _cancellationToken);

@@ -34,18 +34,14 @@ namespace TaskToOctopus.Infrastructure
             if (workers == null)
                 return Task.FromResult(wks.ToList());
 
-            //var workers = (from table in messages
-            //               select table)
-            //           .Select(field => field.UserID)
-            //           .Distinct()
-            //           .ToList();
+            var setting = _appSettings.Settings;
 
             foreach (var item in workers)
             {
-                if(_appSettings.Settings.DefaultEndpoint.Length == 0)
-                    wks.Add(new WorkerModel(item.SSODealerID, item.SSODealerID, item.CRMLink, "api/backend/messages", "GET"));
+                if(setting.DefaultEndpoint.Length == 0)
+                    wks.Add(new WorkerModel(item.SSODealerID, item.DBName, item.CRMLink, setting.DefaultNotificator, setting.Method));
                 else
-                    wks.Add(new WorkerModel(item.SSODealerID, item.SSODealerID, _appSettings.Settings.DefaultEndpoint, "api/backend/messages", "GET"));
+                    wks.Add(new WorkerModel(item.SSODealerID, item.DBName , setting.DefaultEndpoint, setting.DefaultNotificator, setting.Method));
             }
 
             return Task.FromResult(wks.ToList());
@@ -112,9 +108,10 @@ namespace TaskToOctopus.Infrastructure
                 if (work.Method == "GET")
                 {
                     request.AddQueryParameter("dealerkey", work.SSODealerID);
+                    request.AddQueryParameter("connname", work.ConnName);
                 }
 
-                request.AddHeader("origin", "http://tasktooctopus.net");
+                //request.AddHeader("origin", "http://tasktooctopus.net");
                 request.AddHeader("Content-Type", "application/x-www-form-urlencoded");
 
                 var response = client.Execute(request);

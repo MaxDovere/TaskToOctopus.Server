@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="BackgroundTaskQueueNext.cs" />
     <Compile Remove="Extensions\DomainExtension.cs" />
     <Compile Remove="Extensions\ServicesExtension.cs" />
     <Compile Remove="Interfaces\PushNotificationsDequeuer.cs" />
